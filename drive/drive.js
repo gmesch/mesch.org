@@ -132,7 +132,7 @@ async function listFiles() {
   }
 
   const output = files.reduce(
-    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <a href="{file.webViewLink}"><img src="${file.thumbnailLink}"></a></div>\n`,
+    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <a href="${file.webViewLink}"><img src="${file.thumbnailLink}"></a></div>\n`,
     '<h2>Files</h2>');
   document.getElementById('content').innerHTML = output +
     '<div><button onclick="listFiles()">More</button>';
