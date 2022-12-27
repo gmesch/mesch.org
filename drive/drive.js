@@ -101,7 +101,7 @@ let pageToken = null;
 async function listFiles() {
   let request = {
     pageSize: 10,
-    fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink)',
+    fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink)',
     q: "mimeType contains 'image/'",
   };
   if (pageToken) {
@@ -132,7 +132,7 @@ async function listFiles() {
   }
 
   const output = files.reduce(
-    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <img src="${file.thumbnailLink}"></div>\n`,
+    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <a href="{file.webViewLink}"><img src="${file.thumbnailLink}"></a></div>\n`,
     '<h2>Files</h2>');
   document.getElementById('content').innerHTML = output +
     '<div><button onclick="listFiles()">More</button>';
