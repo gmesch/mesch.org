@@ -1,7 +1,7 @@
 const CLIENT_ID = '984348095409-se00lmqecpjf4mfoldhtf7bciprelcki.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyA3Bzd1U5oLKC8lx1TtLS8kLQOJLOFfCuk';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
 let tokenClient;
 let initAuth = false;
@@ -101,7 +101,7 @@ async function listFiles() {
   try {
     response = await gapi.client.drive.files.list({
       'pageSize': 10,
-      'fields': 'files(id, name, mimeType)',
+      'fields': 'files(id, name, mimeType, thumbnailLink)',
       'q': "mimeType contains 'image/'",
     });
   } catch (err) {
@@ -115,7 +115,7 @@ async function listFiles() {
   }
   // Flatten to string to display
   const output = files.reduce(
-    (str, file) => `${str}${file.name} (${file.mimeType} ${file.id})\n`,
-    'Files:\n');
-  document.getElementById('content').innerText = output;
+    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <img src="${file.thumbnailLink}"></div>\n`,
+    '<h2>Files</h2>');
+  document.getElementById('content').innerHTML = output;
 }
