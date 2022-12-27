@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Drive</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <div class="head">
+      <button id="authorize_button" onclick="login()">Authorize</button>
+      <button id="signout_button" onclick="logout()">Sign Out</button>
+    </div>
+    <pre id="content" style="white-space: pre-wrap;"></pre>
+
+    <script src="drive.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+  </body>
+</html>
