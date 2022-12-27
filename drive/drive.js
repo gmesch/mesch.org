@@ -110,7 +110,7 @@ async function listFiles() {
   }
   // Flatten to string to display
   const output = files.reduce(
-    (str, file) => `${str}${file.name} (${file.id}\n`,
+    (str, file) => `${str}${file.name} (${file.id})\n`,
     'Files:\n');
   document.getElementById('content').innerText = output;
 }
