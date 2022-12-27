@@ -7,8 +7,8 @@ let tokenClient;
 let initAuth = false;
 let initApi = false;
 
-document.getElementById('authorize_button').style.visibility = 'hidden';
-document.getElementById('signout_button').style.visibility = 'hidden';
+//document.getElementById('authorize_button').style.visibility = 'hidden';
+//document.getElementById('signout_button').style.visibility = 'hidden';
 
 /**
  * Callback after api.js is loaded.
@@ -48,11 +48,8 @@ function loadAuth() {
  */
 function maybeEnableButtons() {
   if (initAuth && initApi) {
-    if (gapi.client.getToken() !== null) {
-      login();
-    } else {
-      document.getElementById('authorize_button').style.visibility = 'visible';
-    }
+    document.getElementById('authorize_button').style.visibility = 'visible';
+    login();
   }
 }
 
