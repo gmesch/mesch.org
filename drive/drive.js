@@ -98,6 +98,7 @@ async function listFiles() {
     response = await gapi.client.drive.files.list({
       'pageSize': 10,
       'fields': 'files(id, name)',
+      'q': "mimeType contains 'image/'",
     });
   } catch (err) {
     document.getElementById('content').innerText = err.message;
