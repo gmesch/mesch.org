@@ -101,7 +101,7 @@ let pageToken = null;
 async function listFiles() {
   let request = {
     pageSize: 10,
-    fields: 'files(id, name, mimeType, thumbnailLink)',
+    fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink)',
     q: "mimeType contains 'image/'",
   };
   if (pageToken) {
@@ -115,6 +115,9 @@ async function listFiles() {
     document.getElementById('content').innerText = err.message;
     return;
   }
+
+  console.log(request);
+  console.log(response);
 
   const files = response.result.files;
   if (!files || files.length == 0) {
