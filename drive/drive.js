@@ -48,7 +48,11 @@ function loadAuth() {
  */
 function maybeEnableButtons() {
   if (initAuth && initApi) {
-    document.getElementById('authorize_button').style.visibility = 'visible';
+    if (gapi.client.getToken() !== null) {
+      login();
+    } else {
+      document.getElementById('authorize_button').style.visibility = 'visible';
+    }
   }
 }
 
