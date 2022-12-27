@@ -97,7 +97,7 @@ async function listFiles() {
   try {
     response = await gapi.client.drive.files.list({
       'pageSize': 10,
-      'fields': 'files(id, name)',
+      'fields': 'files(id, name, mimeType)',
       'q': "mimeType contains 'image/'",
     });
   } catch (err) {
@@ -111,7 +111,7 @@ async function listFiles() {
   }
   // Flatten to string to display
   const output = files.reduce(
-    (str, file) => `${str}${file.name} (${file.id})\n`,
+    (str, file) => `${str}${file.name} (${file.mimeType} ${file.id})\n`,
     'Files:\n');
   document.getElementById('content').innerText = output;
 }
