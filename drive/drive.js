@@ -117,7 +117,7 @@ async function listFiles() {
   }
 
   console.log(request);
-  console.log(response);
+  console.log(response.result);
 
   const files = response.result.files;
   if (!files || files.length == 0) {
@@ -125,8 +125,8 @@ async function listFiles() {
     return;
   }
 
-  if (request.nextPageToken) {
-    pageToken = request.nextPageToken;
+  if (response.result.nextPageToken) {
+    pageToken = response.result.nextPageToken;
   } else {
     pageToken = null;
   }
