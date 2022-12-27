@@ -4,8 +4,8 @@ const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/res
 const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
 
 let tokenClient;
-let gapiInited = false;
-let gisInited = false;
+let initAuth = false;
+let initApi = false;
 
 document.getElementById('authorize_button').style.visibility = 'hidden';
 document.getElementById('signout_button').style.visibility = 'hidden';
@@ -13,33 +13,33 @@ document.getElementById('signout_button').style.visibility = 'hidden';
 /**
  * Callback after api.js is loaded.
  */
-function gapiLoaded() {
-  gapi.load('client', initializeGapiClient);
+function loadApi() {
+  gapi.load('client', loadApiClient);
 }
 
 /**
  * Callback after the API client is loaded. Loads the
  * discovery doc to initialize the API.
  */
-async function initializeGapiClient() {
+async function loadApiClient() {
   await gapi.client.init({
     apiKey: API_KEY,
     discoveryDocs: [DISCOVERY_DOC],
   });
-  gapiInited = true;
+  initApi = true;
   maybeEnableButtons();
 }
 
 /**
  * Callback after Google Identity Services are loaded.
  */
-function gisLoaded() {
+function loadAuth() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
     callback: '', // defined later
   });
-  gisInited = true;
+  initAuth = true;
   maybeEnableButtons();
 }
 
@@ -47,7 +47,7 @@ function gisLoaded() {
  * Enables user interaction after all libraries are loaded.
  */
 function maybeEnableButtons() {
-  if (gapiInited && gisInited) {
+  if (initAuth && initApi) {
     document.getElementById('authorize_button').style.visibility = 'visible';
   }
 }
