@@ -93,29 +93,44 @@ function logout() {
   }
 }
 
+let pageToken = null;
+
 /**
  * Print metadata for first 10 files.
  */
 async function listFiles() {
+  let request = {
+    pageSize: 10,
+    fields: 'files(id, name, mimeType, thumbnailLink)',
+    q: "mimeType contains 'image/'",
+  };
+  if (pageToken) {
+    request.pageToken = pageToken;
+  }
+
   let response;
   try {
-    response = await gapi.client.drive.files.list({
-      'pageSize': 10,
-      'fields': 'files(id, name, mimeType, thumbnailLink)',
-      'q': "mimeType contains 'image/'",
-    });
+    response = await gapi.client.drive.files.list(request);
   } catch (err) {
     document.getElementById('content').innerText = err.message;
     return;
   }
+
   const files = response.result.files;
   if (!files || files.length == 0) {
     document.getElementById('content').innerText = 'No files found.';
     return;
   }
-  // Flatten to string to display
+
+  if (request.nextPageToken) {
+    pageToken = request.nextPageToken;
+  } else {
+    pageToken = null;
+  }
+
   const output = files.reduce(
     (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <img src="${file.thumbnailLink}"></div>\n`,
     '<h2>Files</h2>');
-  document.getElementById('content').innerHTML = output;
+  document.getElementById('content').innerHTML = output +
+    '<div><button onclick="listFiles()">More</button>';
 }
