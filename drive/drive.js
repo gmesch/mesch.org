@@ -1,78 +1,172 @@
 const CLIENT_ID = '984348095409-se00lmqecpjf4mfoldhtf7bciprelcki.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyA3Bzd1U5oLKC8lx1TtLS8kLQOJLOFfCuk';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'].join(' ');
 
-let tokenClient;
-let initAuth = false;
-let initApi = false;
+class Flow {
+  constructor(document) {
+    this.document_ = document;
+    this.readyApi_ = false;
+    this.tokenClient_ = null;
+    this.token_ = null;
+    this.start_ = null;
 
-//document.getElementById('authorize_button').style.visibility = 'hidden';
-//document.getElementById('signout_button').style.visibility = 'hidden';
+    this.buttonLogin_ = document.getElementById('login');
+    this.buttonLogout_ = document.getElementById('logout');
+    this.content_ = document.getElementById('content');
 
-/**
- * Callback after api.js is loaded.
- */
-function loadApi() {
-  gapi.load('client', loadApiClient);
+    this.buttonStateHidden_();
+  }
+
+  readyApi() {
+    console.log('readyApi');
+    this.readyApi_ = true;
+    this.checkToken_();
+  }
+
+  readyAuth(tokenClient) {
+    console.log('readyAuth');
+    this.tokenClient_ = tokenClient;
+    this.checkToken_();
+  }
+
+  start(fn) {
+    this.start_ = fn;
+    this.checkStart_();
+  }
+
+  checkStart_() {
+    if (this.start_ && this.token_) {
+      this.start_();
+    }
+  }
+
+  checkToken_() {
+    if (!this.readyApi_ || !this.tokenClient_) {
+      return;
+    }
+
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      this.useAccessToken_(accessToken);
+    } else {
+      this.noAccessToken_();
+    }
+  }
+
+  useAccessToken_(accessToken) {
+    console.log('useAccessToken ' + JSON.stringify(accessToken));
+    gapi.client.setToken({'access_token': accessToken});
+    this.buttonStateLogin_();
+    this.token_ = accessToken;
+    this.checkStart_();
+  }
+
+  noAccessToken_() {
+    console.log('noAccessToken');
+    this.buttonStateLogout_();
+  }
+
+  newAccessToken() {
+    console.log('newAccessToken');
+    this.getAccessToken_({prompt: 'consent'});
+  }
+
+  refreshAccessToken() {
+    console.log('refreshAccessToken');
+    this.getAccessToken_({prompt: ''});
+  }
+
+  revokeAccessToken() {
+    console.log('revokeAccessToken');
+    // NOTE: getToken() does NOT return the access token directly.
+    const token = gapi.client.getToken();
+    if (token === null) {
+      return;
+    }
+
+    google.accounts.oauth2.revoke(token.access_token); // cf. NOTE above.
+    gapi.client.setToken('');
+    localStorage.removeItem('access_token');
+
+    this.buttonStateLogout_();
+  }
+
+  getAccessToken_(opts) {
+    const flow = this;
+    this.tokenClient_.callback = async (tokenResponse) => {
+      if (tokenResponse.error !== undefined) {
+        throw (tokenResponse);
+      }
+
+      console.log('tokenResponse: ' + JSON.stringify(tokenResponse));
+
+      // Automatically updated.
+      console.log('gapi.client.getToken(): ' + JSON.stringify(gapi.client.getToken()));
+
+      const accessToken = tokenResponse.access_token;
+      localStorage.setItem('access_token', accessToken);
+      flow.buttonStateLogin_();
+
+      this.token_ = accessToken;
+      this.checkStart_();
+    };
+
+    this.tokenClient_.requestAccessToken(opts);
+  }
+
+  buttonStateHidden_() {
+    this.buttonLogin_.style.visibility = 'hidden';
+    this.buttonLogout_.style.visibility = 'hidden';
+    this.content_.style.visibility = 'hidden';
+  }
+
+  buttonStateLogin_() {
+    this.buttonLogin_.style.visibility = '';
+    this.buttonLogin_.innerText = 'Refresh';
+    this.buttonLogout_.style.visibility = '';
+    this.content_.style.visibility = '';
+  }
+
+  buttonStateLogout_() {
+    this.buttonLogin_.style.visibility = '';
+    this.buttonLogin_.innerText = 'Authorize';
+    this.buttonLogout_.style.visibility = '';
+    this.content_.style.visibility = '';
+    this.content_.innerHTML = '';
+  }
 }
 
-/**
- * Callback after the API client is loaded. Loads the
- * discovery doc to initialize the API.
- */
-async function loadApiClient() {
-  await gapi.client.init({
-    apiKey: API_KEY,
-    discoveryDocs: [DISCOVERY_DOC],
+const flow = new Flow(document);
+
+function onLoadApi() {
+  gapi.load('client', () => {
+    gapi.client.init({
+      apiKey: API_KEY,
+      discoveryDocs: [DISCOVERY_DOC],
+    }).then(() => {
+      flow.readyApi();
+    });
   });
-  initApi = true;
-  maybeEnableButtons();
 }
 
-/**
- * Callback after Google Identity Services are loaded.
- */
-function loadAuth() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
+function onLoadAuth() {
+  const tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    callback: '', // defined later
+    callback: '', // defined again before requestAccessToken() is called.
   });
-  initAuth = true;
-  maybeEnableButtons();
-}
-
-/**
- * Enables user interaction after all libraries are loaded.
- */
-function maybeEnableButtons() {
-  if (initAuth && initApi) {
-    document.getElementById('authorize_button').style.visibility = 'visible';
-    login();
-  }
+  flow.readyAuth(tokenClient);
 }
 
 /**
  *  Sign in the user upon button click.
  */
 function login() {
-  tokenClient.callback = async (resp) => {
-    if (resp.error !== undefined) {
-      throw (resp);
-    }
-    document.getElementById('signout_button').style.visibility = 'visible';
-    document.getElementById('authorize_button').innerText = 'Refresh';
-    await listFiles();
-  };
-
   if (gapi.client.getToken() === null) {
-    // Prompt the user to select a Google Account and ask for consent to share their data
-    // when establishing a new session.
-    tokenClient.requestAccessToken({prompt: 'consent'});
+    flow.newAccessToken();
   } else {
-    // Skip display of account chooser and consent dialog for an existing session.
-    tokenClient.requestAccessToken({prompt: ''});
+    flow.refreshAccessToken();
   }
 }
 
@@ -80,27 +174,23 @@ function login() {
  *  Sign out the user upon button click.
  */
 function logout() {
-  const token = gapi.client.getToken();
-  if (token !== null) {
-    google.accounts.oauth2.revoke(token.access_token);
-    gapi.client.setToken('');
-    document.getElementById('content').innerText = '';
-    document.getElementById('authorize_button').innerText = 'Authorize';
-    document.getElementById('signout_button').style.visibility = 'hidden';
-  }
+  flow.revokeAccessToken();
 }
 
-let pageToken = null;
+let pageToken = localStorage.getItem('page_token');
 
-/**
- * Print metadata for first 10 files.
- */
+async function resetPage() {
+  pageToken = null;
+  await listFiles();
+}
+
 async function listFiles() {
   let request = {
     pageSize: 10,
     fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink)',
     q: "mimeType contains 'image/'",
   };
+
   if (pageToken) {
     request.pageToken = pageToken;
   }
@@ -108,6 +198,11 @@ async function listFiles() {
   let response;
   try {
     response = await gapi.client.drive.files.list(request);
+    if (pageToken) {
+      localStorage.setItem('page_token', pageToken);
+    } else {
+      localStorage.removeItem('page_token');
+    }
   } catch (err) {
     document.getElementById('content').innerText = err.message;
     return;
@@ -132,5 +227,8 @@ async function listFiles() {
     (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <a href="${file.webViewLink}"><img src="${file.thumbnailLink}"></a></div>\n`,
     '<h2>Files</h2>');
   document.getElementById('content').innerHTML = output +
-    '<div><button onclick="listFiles()">More</button>';
+    '<div><button onclick="listFiles()">More</button> ' +
+    '<button onclick="resetPage()">Reset</button></div>';
 }
+
+flow.start(listFiles);

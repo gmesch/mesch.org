@@ -6,13 +6,13 @@
   </head>
   <body>
     <div class="head">
-      <button id="authorize_button" onclick="login()">Authorize</button>
-      <button id="signout_button" onclick="logout()">Sign Out</button>
+      <button id="login" onclick="login()">Authorize</button>
+      <button id="logout" onclick="logout()">Sign Out</button>
     </div>
     <pre id="content" style="white-space: pre-wrap;"></pre>
 
     <script src="drive.js"></script>
-    <script src="https://apis.google.com/js/api.js" onload="loadApi()"></script>
-    <script src="https://accounts.google.com/gsi/client" onload="loadAuth()"></script>
+    <script src="https://apis.google.com/js/api.js" onload="onLoadApi()"></script>
+    <script src="https://accounts.google.com/gsi/client" onload="onLoadAuth()"></script>
   </body>
 </html>
