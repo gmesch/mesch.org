@@ -10,10 +10,10 @@ class Flow {
     this.tokenClient_ = null;
     this.token_ = null;
     this.start_ = null;
+    this.logout_ = null;
 
     this.buttonLogin_ = document.getElementById('login');
     this.buttonLogout_ = document.getElementById('logout');
-    this.content_ = document.getElementById('content');
 
     this.buttonStateHidden_();
   }
@@ -30,13 +30,19 @@ class Flow {
     this.checkToken_();
   }
 
-  start(fn) {
+  atStart(fn) {
     this.start_ = fn;
     this.checkStart_();
   }
 
+  atLogout(fn) {
+    this.logout_ = fn;
+  }
+
   checkStart_() {
+    console.log('checkStart');
     if (this.start_ && this.token_) {
+      console.log('start');
       this.start_();
     }
   }
@@ -90,6 +96,10 @@ class Flow {
     localStorage.removeItem('access_token');
 
     this.buttonStateLogout_();
+
+    if (this.logout_) {
+      this.logout_();
+    }
   }
 
   getAccessToken_(opts) {
@@ -118,22 +128,18 @@ class Flow {
   buttonStateHidden_() {
     this.buttonLogin_.style.visibility = 'hidden';
     this.buttonLogout_.style.visibility = 'hidden';
-    this.content_.style.visibility = 'hidden';
   }
 
   buttonStateLogin_() {
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Refresh';
     this.buttonLogout_.style.visibility = '';
-    this.content_.style.visibility = '';
   }
 
   buttonStateLogout_() {
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Authorize';
     this.buttonLogout_.style.visibility = '';
-    this.content_.style.visibility = '';
-    this.content_.innerHTML = '';
   }
 }
 
@@ -179,7 +185,7 @@ function logout() {
 
 let pageToken = localStorage.getItem('page_token');
 
-async function resetPage() {
+async function resetFiles() {
   pageToken = null;
   await listFiles();
 }
@@ -208,8 +214,8 @@ async function listFiles() {
     return;
   }
 
-  console.log(request);
-  console.log(response.result);
+  console.log(JSON.stringify(request, null, 2));
+  console.log(JSON.stringify(response.result, null, 2));
 
   const files = response.result.files;
   if (!files || files.length == 0) {
@@ -228,7 +234,14 @@ async function listFiles() {
     '<h2>Files</h2>');
   document.getElementById('content').innerHTML = output +
     '<div><button onclick="listFiles()">More</button> ' +
-    '<button onclick="resetPage()">Reset</button></div>';
+    '<button onclick="resetFiles()">Reset</button></div>';
 }
 
-flow.start(listFiles);
+function clearFiles() {
+  pageToken = null;
+  localStorage.removeItem('page_token');
+  document.getElementById('content').innerHTML = '';
+}
+
+flow.atStart(listFiles);
+flow.atLogout(clearFiles);
