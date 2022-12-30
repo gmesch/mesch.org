@@ -201,27 +201,15 @@ async function listFiles() {
     request.pageToken = pageToken;
   }
 
-  let response;
-  try {
-    response = await gapi.client.drive.files.list(request);
-    if (pageToken) {
-      localStorage.setItem('page_token', pageToken);
-    } else {
-      localStorage.removeItem('page_token');
-    }
-  } catch (err) {
-    document.getElementById('content').innerText = err.message;
-    return;
+  const response = await gapi.client.drive.files.list(request);
+  if (pageToken) {
+    localStorage.setItem('page_token', pageToken);
+  } else {
+    localStorage.removeItem('page_token');
   }
 
   console.log(JSON.stringify(request, null, 2));
   console.log(JSON.stringify(response.result, null, 2));
-
-  const files = response.result.files;
-  if (!files || files.length == 0) {
-    document.getElementById('content').innerText = 'No files found.';
-    return;
-  }
 
   if (response.result.nextPageToken) {
     pageToken = response.result.nextPageToken;
@@ -229,12 +217,9 @@ async function listFiles() {
     pageToken = null;
   }
 
-  const output = files.reduce(
-    (str, file) => `<div>${str}${file.name} (${file.mimeType} ${file.id}) <a href="${file.webViewLink}"><img src="${file.thumbnailLink}"></a></div>\n`,
-    '<h2>Files</h2>');
-  document.getElementById('content').innerHTML = output +
-    '<div><button onclick="listFiles()">More</button> ' +
-    '<button onclick="resetFiles()">Reset</button></div>';
+  const input = new JsEvalContext(response.result);
+  const output = document.getElementById('content');
+  jstProcess(input, output);
 }
 
 function clearFiles() {

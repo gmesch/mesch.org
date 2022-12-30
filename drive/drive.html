@@ -3,13 +3,30 @@
   <head>
     <title>Drive</title>
     <meta charset="utf-8">
+    <script src="../vnd/jstemplate/util.js" type="text/javascript"></script>
+    <script src="../vnd/jstemplate/jsevalcontext.js" type="text/javascript"></script>
+    <script src="../vnd/jstemplate/jstemplate.js" type="text/javascript"></script>
   </head>
   <body>
     <div class="head">
       <button id="login" onclick="login()">Authorize</button>
       <button id="logout" onclick="logout()">Sign Out</button>
     </div>
-    <pre id="content" style="white-space: pre-wrap;"></pre>
+
+    <div id="content" style="display:none" jsdisplay="files">
+      <h2>Files</h2>
+      <div jsselect="files">
+        <span jscontent="name"></span>
+        (<span jscontent="mimeType"></span> <span jscontent="id"></span>)
+        <a href="" jsvalues=".href:webViewLink">
+          <img src="" jsvalues=".src:thumbnailLink">
+        </a>
+      </div>
+      <div>
+        <button onclick="listFiles()">More</button>
+        <button onclick="resetFiles()">Reset</button>
+      </div>
+    </div>
 
     <script src="drive.js"></script>
     <script src="https://apis.google.com/js/api.js" onload="onLoadApi()"></script>
