@@ -16,11 +16,7 @@
     <div id="content" style="display:none" jsdisplay="files">
       <h2>Files</h2>
       <div jsselect="files">
-        <span jscontent="name"></span>
-        (<span jscontent="mimeType"></span> <span jscontent="id"></span>)
-        <a href="" jsvalues=".href:webViewLink">
-          <img src="" jsvalues=".src:thumbnailLink">
-        </a>
+        <div transclude="file"></div>
       </div>
       <div>
         <button onclick="listFiles()">More</button>
@@ -31,5 +27,15 @@
     <script src="drive.js"></script>
     <script src="https://apis.google.com/js/api.js" onload="onLoadApi()"></script>
     <script src="https://accounts.google.com/gsi/client" onload="onLoadAuth()"></script>
+
+    <div style="display:none">
+      <div id="file">
+        <span jscontent="name"></span>
+        (<span jscontent="mimeType"></span> <span jscontent="id"></span>)
+        <a href="" jsvalues=".href:webViewLink">
+          <img src="" jsvalues=".src:thumbnailLink">
+        </a>
+      </div>
+    </div>
   </body>
 </html>
