@@ -1,5 +1,3 @@
-const CLIENT_ID = '984348095409-se00lmqecpjf4mfoldhtf7bciprelcki.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyA3Bzd1U5oLKC8lx1TtLS8kLQOJLOFfCuk';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'].join(' ');
 
@@ -12,10 +10,59 @@ class Flow {
     this.start_ = null;
     this.logout_ = null;
 
+    this.apiKey_ = null;
+    this.apiKeyApplied_ = null;
+    this.clientId_ = null;
+    this.clientIdApplied_ = null;
+
     this.buttonLogin_ = document.getElementById('login');
     this.buttonLogout_ = document.getElementById('logout');
 
     this.buttonStateHidden_();
+  }
+
+  readyApiKey(apiKey) {
+    console.log('readyApiKey');
+    this.apiKey_ = apiKey;
+    this.checkApiKey_();
+  }
+
+  atApiKey(fn) {
+    this.apiKeyFn_ = fn;
+    this.checkApiKey_();
+  }
+
+  checkApiKey_() {
+    if (!this.apiKey_ || !this.apiKeyFn_) {
+      return;
+    }
+
+    if (this.apiKeyApplied_ != this.apiKey_) {
+      this.apiKeyApplied_ = this.apiKey_;
+      this.apiKeyFn_(this.apiKey_);
+    }
+  }
+
+  readyClientId(clientId) {
+    console.log('readyClientId');
+    this.clientId_ = clientId;
+    this.checkClientId_();
+  }
+
+  atClientId(fn) {
+    this.clientIdFn_ = fn;
+    this.checkClientId_();
+  }
+
+  checkClientId_() {
+    if (!this.clientId_ || !this.clientIdFn_) {
+      return;
+    }
+
+    if (this.clientIdApplied_ != this.clientId_) {
+      this.clientIdApplied_ = this.clientId_;
+      this.clientIdFn_(this.clientId_);
+    }
   }
 
   readyApi() {
@@ -30,23 +77,6 @@ class Flow {
     this.checkToken_();
   }
 
-  atStart(fn) {
-    this.start_ = fn;
-    this.checkStart_();
-  }
-
-  atLogout(fn) {
-    this.logout_ = fn;
-  }
-
-  checkStart_() {
-    console.log('checkStart');
-    if (this.start_ && this.token_) {
-      console.log('start');
-      this.start_();
-    }
-  }
-
   checkToken_() {
     if (!this.readyApi_ || !this.tokenClient_) {
       return;
@@ -58,6 +88,11 @@ class Flow {
     } else {
       this.noAccessToken_();
     }
+  }
+
+  atStart(fn) {
+    this.start_ = fn;
+    this.checkStart_();
   }
 
   useAccessToken_(accessToken) {
@@ -83,25 +118,6 @@ class Flow {
     this.getAccessToken_({prompt: ''});
   }
 
-  revokeAccessToken() {
-    console.log('revokeAccessToken');
-    // NOTE: getToken() does NOT return the access token directly.
-    const token = gapi.client.getToken();
-    if (token === null) {
-      return;
-    }
-
-    google.accounts.oauth2.revoke(token.access_token); // cf. NOTE above.
-    gapi.client.setToken('');
-    localStorage.removeItem('access_token');
-
-    this.buttonStateLogout_();
-
-    if (this.logout_) {
-      this.logout_();
-    }
-  }
-
   getAccessToken_(opts) {
     const flow = this;
     this.tokenClient_.callback = async (tokenResponse) => {
@@ -125,6 +141,37 @@ class Flow {
     this.tokenClient_.requestAccessToken(opts);
   }
 
+  checkStart_() {
+    console.log('checkStart');
+    if (this.start_ && this.token_) {
+      console.log('start');
+      this.start_();
+    }
+  }
+
+  atLogout(fn) {
+    this.logout_ = fn;
+  }
+
+  revokeAccessToken() {
+    console.log('revokeAccessToken');
+    // NOTE: getToken() does NOT return the access token directly.
+    const token = gapi.client.getToken();
+    if (token === null) {
+      return;
+    }
+
+    google.accounts.oauth2.revoke(token.access_token); // cf. NOTE above.
+    gapi.client.setToken('');
+    localStorage.removeItem('access_token');
+
+    this.buttonStateLogout_();
+
+    if (this.logout_) {
+      this.logout_();
+    }
+  }
+
   buttonStateHidden_() {
     this.buttonLogin_.style.visibility = 'hidden';
     this.buttonLogout_.style.visibility = 'hidden';
@@ -146,28 +193,47 @@ class Flow {
 const flow = new Flow(document);
 
 function onLoadApi() {
-  gapi.load('client', () => {
-    gapi.client.init({
-      apiKey: API_KEY,
-      discoveryDocs: [DISCOVERY_DOC],
-    }).then(() => {
-      flow.readyApi();
+  flow.atApiKey((apiKey) => {
+    gapi.load('client', () => {
+      gapi.client.init({
+        apiKey: apiKey,
+        discoveryDocs: [DISCOVERY_DOC],
+      }).then(() => {
+        flow.readyApi();
+      });
     });
   });
 }
 
 function onLoadAuth() {
-  const tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: '', // defined again before requestAccessToken() is called.
+  flow.atClientId((clientId) => {
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: SCOPES,
+      callback: '', // defined again before requestAccessToken() is called.
+    });
+    flow.readyAuth(tokenClient);
   });
-  flow.readyAuth(tokenClient);
 }
 
-/**
- *  Sign in the user upon button click.
- */
+function init() {
+  document.getElementById('apikey').value = localStorage.getItem('apikey');
+  document.getElementById('client').value = localStorage.getItem('client');
+
+  flow.readyClientId(document.getElementById('client').value);
+  flow.readyApiKey(document.getElementById('apikey').value);
+}
+
+function setup(event) {
+  console.log('setup');
+  localStorage.setItem('apikey', document.getElementById('apikey').value);
+  localStorage.setItem('client', document.getElementById('client').value);
+  event.preventDefault();
+
+  flow.readyClientId(document.getElementById('client').value);
+  flow.readyApiKey(document.getElementById('apikey').value);
+}
+
 function login() {
   if (gapi.client.getToken() === null) {
     flow.newAccessToken();
@@ -176,9 +242,6 @@ function login() {
   }
 }
 
-/**
- *  Sign out the user upon button click.
- */
 function logout() {
   flow.revokeAccessToken();
 }

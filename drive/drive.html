@@ -7,8 +7,24 @@
     <script src="../vnd/jstemplate/jsevalcontext.js" type="text/javascript"></script>
     <script src="../vnd/jstemplate/jstemplate.js" type="text/javascript"></script>
   </head>
-  <body>
-    <div class="head">
+  <body onload="init()">
+    <div>
+      <form onsubmit="setup(event)">
+        <a href="https://console.cloud.google.com/apis/credentials"
+           target="console.cloud.google.com">API key:</a>
+        <br>
+        <input type="text" size="60" name="apikey" id="apikey">
+        <br>
+        <a href="https://console.cloud.google.com/apis/credentials"
+           target="console.cloud.google.com">Client ID:</a>
+        <br>
+        <input type="text" size="60" name="client" id="client">
+        <br>
+        <input type="submit">
+      </form>
+    </div>
+
+    <div>
       <button id="login" onclick="login()">Authorize</button>
       <button id="logout" onclick="logout()">Sign Out</button>
     </div>
