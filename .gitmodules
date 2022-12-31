@@ -1,3 +1,4 @@
 [submodule "vnd/jstemplate"]
 	path = vnd/jstemplate
 	url = git@github.com:gmesch/jstemplate.git
+  branch = mesch-org
