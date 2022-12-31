@@ -10,7 +10,32 @@ Other purposes:
   mail conversaions into folders that correspond to the label of the
   conversation.
 
+## TODO
+
+* load scripts with a loader service
+* handle events with jsaction
+* maybe use jscompiler and closure to configure jsaction
+
 ## Notes
+
+### Make API key and oauth client configurable in the client
+
+* Create a page that lets you store API client and OAuth client in local storage
+  of the browser.
+* Let the app read API key and OAuth client from local storage.
+* Alternative is to supply the keys in URL parameters. This would leak them in
+  referrers. So they would need to be taken off the URL and put into local
+  storage too.
+
+### Configure a bazel workspace
+
+### Use jsaction to handle events
+
+### Use a loader service to load scripts
+
+### Use jstemplate for rendering content
+
+Add jstemplate as submodule under `/vnd/jstemplate` and use it.
 
 ### Tokens for page apps at file:// URLs
 
