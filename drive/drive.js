@@ -28,18 +28,24 @@ class Flow {
   }
 
   atApiKey(fn) {
+    console.log('atApiKey');
     this.apiKeyFn_ = fn;
     this.checkApiKey_();
   }
 
   checkApiKey_() {
+    console.log('checkApiKey_');
     if (!this.apiKey_ || !this.apiKeyFn_) {
+      console.log('checkApiKey_: No');
       return;
     }
 
     if (this.apiKeyApplied_ != this.apiKey_) {
+      console.log('checkApiKey_: Apply');
       this.apiKeyApplied_ = this.apiKey_;
       this.apiKeyFn_(this.apiKey_);
+    } else {
+      console.log('checkApiKey_: Unchanged');
     }
   }
 
@@ -50,18 +56,24 @@ class Flow {
   }
 
   atClientId(fn) {
+    console.log('atClientId');
     this.clientIdFn_ = fn;
     this.checkClientId_();
   }
 
   checkClientId_() {
+    console.log('checkClientId_');
     if (!this.clientId_ || !this.clientIdFn_) {
+      console.log('checkClientId_: No');
       return;
     }
 
     if (this.clientIdApplied_ != this.clientId_) {
+      console.log('checkClientId_: Apply');
       this.clientIdApplied_ = this.clientId_;
       this.clientIdFn_(this.clientId_);
+    } else {
+      console.log('checkClientId_: Unchanged');
     }
   }
 
@@ -78,25 +90,30 @@ class Flow {
   }
 
   checkToken_() {
+    console.log('checkToken_');
     if (!this.readyApi_ || !this.tokenClient_) {
+      console.log('checkToken_: No');
       return;
     }
 
     const accessToken = localStorage.getItem('access_token');
     if (accessToken) {
+      console.log('checkToken_: Use');
       this.useAccessToken_(accessToken);
     } else {
+      console.log('checkToken_: Need');
       this.noAccessToken_();
     }
   }
 
   atStart(fn) {
+    console.log('atStart_');
     this.start_ = fn;
     this.checkStart_();
   }
 
   useAccessToken_(accessToken) {
-    console.log('useAccessToken ' + JSON.stringify(accessToken));
+    console.log('useAccessToken_: ' + JSON.stringify(accessToken));
     gapi.client.setToken({'access_token': accessToken});
     this.buttonStateLogin_();
     this.token_ = accessToken;
@@ -104,7 +121,7 @@ class Flow {
   }
 
   noAccessToken_() {
-    console.log('noAccessToken');
+    console.log('noAccessToken_');
     this.buttonStateLogout_();
   }
 
@@ -119,10 +136,11 @@ class Flow {
   }
 
   getAccessToken_(opts) {
+    console.log('getAccessToken_');
     const flow = this;
     this.tokenClient_.callback = async (tokenResponse) => {
       if (tokenResponse.error !== undefined) {
-        throw (tokenResponse);
+        throw tokenResponse;
       }
 
       console.log('tokenResponse: ' + JSON.stringify(tokenResponse));
@@ -142,14 +160,18 @@ class Flow {
   }
 
   checkStart_() {
-    console.log('checkStart');
-    if (this.start_ && this.token_) {
-      console.log('start');
-      this.start_();
+    console.log('checkStart_');
+    if (!this.start_ || !this.token_) {
+      console.log('checkStart_: No');
+      return;
     }
+
+    console.log('checkStart: Yes');
+    this.start_();
   }
 
   atLogout(fn) {
+    console.log('atLogout');
     this.logout_ = fn;
   }
 
@@ -173,17 +195,20 @@ class Flow {
   }
 
   buttonStateHidden_() {
+    console.log('buttonStateHidden_');
     this.buttonLogin_.style.visibility = 'hidden';
     this.buttonLogout_.style.visibility = 'hidden';
   }
 
   buttonStateLogin_() {
+    console.log('buttonStateLogin_');
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Refresh';
     this.buttonLogout_.style.visibility = '';
   }
 
   buttonStateLogout_() {
+    console.log('buttonStateLogout_');
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Authorize';
     this.buttonLogout_.style.visibility = '';
@@ -193,12 +218,16 @@ class Flow {
 const flow = new Flow(document);
 
 function onLoadApi() {
+  console.log('onLoadApi');
   flow.atApiKey((apiKey) => {
+    console.log('onLoadApi: atApiKey');
     gapi.load('client', () => {
+      console.log('onLoadApi: atApiKey() gapi.load()');
       gapi.client.init({
         apiKey: apiKey,
         discoveryDocs: [DISCOVERY_DOC],
       }).then(() => {
+        console.log('onLoadApi: atApiKey() gapi.load() gapi.client.init()');
         flow.readyApi();
       });
     });
@@ -206,7 +235,9 @@ function onLoadApi() {
 }
 
 function onLoadAuth() {
+  console.log('onLoadAuth');
   flow.atClientId((clientId) => {
+    console.log('onLoadAuth: atClientId()');
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPES,
@@ -217,6 +248,7 @@ function onLoadAuth() {
 }
 
 function init() {
+  console.log('init');
   document.getElementById('apikey').value = localStorage.getItem('apikey');
   document.getElementById('client').value = localStorage.getItem('client');
 
@@ -235,6 +267,7 @@ function setup(event) {
 }
 
 function login() {
+  console.log('login');
   if (gapi.client.getToken() === null) {
     flow.newAccessToken();
   } else {
@@ -243,17 +276,21 @@ function login() {
 }
 
 function logout() {
+  console.log('logout');
   flow.revokeAccessToken();
 }
 
 let pageToken = localStorage.getItem('page_token');
+const jsEvalContext = new JsEvalContext;
 
 async function resetFiles() {
+  console.log('resetFiles');
   pageToken = null;
   await listFiles();
 }
 
 async function listFiles() {
+  console.log('listFiles');
   let request = {
     pageSize: 10,
     fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink)',
@@ -272,7 +309,7 @@ async function listFiles() {
   }
 
   console.log(JSON.stringify(request, null, 2));
-  console.log(JSON.stringify(response.result, null, 2));
+  //console.log(JSON.stringify(response.result, null, 2));
 
   if (response.result.nextPageToken) {
     pageToken = response.result.nextPageToken;
@@ -280,15 +317,19 @@ async function listFiles() {
     pageToken = null;
   }
 
-  const input = new JsEvalContext(response.result);
+  jsEvalContext.setVariable('files', response.result.files);
   const output = document.getElementById('content');
-  jstProcess(input, output);
+  jstProcess(jsEvalContext, output);
 }
 
 function clearFiles() {
+  console.log('clearFiles');
   pageToken = null;
   localStorage.removeItem('page_token');
-  document.getElementById('content').innerHTML = '';
+
+  jsEvalContext.setVariable('files', null);
+  const output = document.getElementById('content');
+  jstProcess(jsEvalContext, output);
 }
 
 flow.atStart(listFiles);
