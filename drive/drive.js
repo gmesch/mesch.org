@@ -1,6 +1,19 @@
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'].join(' ');
 
+class Script {
+  constructor(url) {
+    this.url_ = url;
+  }
+
+  load(fn) {
+    const script = document.createElement('SCRIPT');
+    script.addEventListener('load', fn);
+    script.src = this.url_;
+    document.head.appendChild(script);
+  }
+}
+
 class FlowCall {
   constructor(name) {
     this.name_ = name;
@@ -39,18 +52,18 @@ class FlowCall {
 }
 
 class Flow {
-  constructor(document) {
-    this.document_ = document;
+  constructor() {
     this.readyApi_ = false;
     this.tokenClient_ = null;
     this.token_ = null;
     this.start_ = null;
     this.logout_ = null;
 
-    this.buttonLogin_ = document.getElementById('login');
-    this.buttonLogout_ = document.getElementById('logout');
+    this.atHide_ = null;
+    this.atLogin_ = null;
+    this.atLogout_ = null;
 
-    this.buttonStateHidden_();
+    this.stateHide_();
   }
 
   readyApi() {
@@ -89,16 +102,16 @@ class Flow {
   }
 
   useAccessToken_(accessToken) {
-    console.log('useAccessToken_: ' + JSON.stringify(accessToken));
+    console.log(`useAccessToken_: ${JSON.stringify(accessToken)}`);
     gapi.client.setToken({'access_token': accessToken});
-    this.buttonStateLogin_();
+    this.stateLogin_();
     this.token_ = accessToken;
     this.checkStart_();
   }
 
   noAccessToken_() {
     console.log('noAccessToken_');
-    this.buttonStateLogout_();
+    this.stateLogout_();
   }
 
   newAccessToken() {
@@ -126,7 +139,7 @@ class Flow {
 
       const accessToken = tokenResponse.access_token;
       localStorage.setItem('access_token', accessToken);
-      flow.buttonStateLogin_();
+      flow.stateLogin_();
 
       this.token_ = accessToken;
       this.checkStart_();
@@ -163,27 +176,65 @@ class Flow {
     gapi.client.setToken('');
     localStorage.removeItem('access_token');
 
-    this.buttonStateLogout_();
+    this.stateLogout_();
 
     if (this.logout_) {
       this.logout_();
     }
   }
 
-  buttonStateHidden_() {
-    console.log('buttonStateHidden_');
+  atHide(fn) {
+    this.atHide_ = fn;
+  }
+
+  stateHide_() {
+    if (this.atHide_) {
+      this.atHide_();
+    }
+  }
+
+  atLogin(fn) {
+    this.atLogin_ = fn;
+  }
+
+  stateLogin_() {
+    if (this.atLogin_) {
+      this.atLogin_();
+    }
+  }
+
+  atLogout(fn) {
+    this.atLogout_ = fn;
+  }
+
+  stateLogout_() {
+    console.log('buttonStateLogout_');
+    if (this.atLogout_) {
+      this.atLogout_();
+    }
+  }
+}
+
+class ButtonView {
+  constructor(document) {
+    this.buttonLogin_ = document.getElementById('login');
+    this.buttonLogout_ = document.getElementById('logout');
+  }
+
+  hide() {
+    console.log('buttonStateHide_');
     this.buttonLogin_.style.visibility = 'hidden';
     this.buttonLogout_.style.visibility = 'hidden';
   }
 
-  buttonStateLogin_() {
+  login() {
     console.log('buttonStateLogin_');
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Refresh';
     this.buttonLogout_.style.visibility = '';
   }
 
-  buttonStateLogout_() {
+  logout() {
     console.log('buttonStateLogout_');
     this.buttonLogin_.style.visibility = '';
     this.buttonLogin_.innerText = 'Authorize';
@@ -191,8 +242,7 @@ class Flow {
   }
 }
 
-const flow = new Flow(document);
-
+const flow = new Flow;
 const apiKeyCall = new FlowCall('apiKey');
 const clientIdCall = new FlowCall('clientId');
 
@@ -233,6 +283,19 @@ function init() {
 
   clientIdCall.arg(document.getElementById('client').value);
   apiKeyCall.arg(document.getElementById('apikey').value);
+
+  new Script('https://apis.google.com/js/api.js').load(onLoadApi);
+  new Script('https://accounts.google.com/gsi/client').load(onLoadAuth);
+
+  const buttonView = new ButtonView(document);
+  flow.atStart(listFiles);
+  flow.atLogout(clearFiles);
+  flow.atHide(() => buttonView.hide());
+  flow.atLogin(() => buttonView.login());
+  flow.atLogout(() => {
+    buttonView.logout();
+    clearFiles();
+  });
 }
 
 function setup(event) {
@@ -320,6 +383,3 @@ function clearFiles() {
   const output = document.getElementById('content');
   jstProcess(jsEvalContext, output);
 }
-
-flow.atStart(listFiles);
-flow.atLogout(clearFiles);
