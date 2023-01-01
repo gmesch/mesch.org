@@ -2,3 +2,7 @@
   path = vnd/jstemplate
   url = git@github.com:gmesch/jstemplate.git
   branch = mesch-org
+[submodule "vnd/jsaction"]
+	path = vnd/jsaction
+	url = git@github.com:gmesch/jsaction.git
+  branch = mesch-org
