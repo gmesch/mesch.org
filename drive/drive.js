@@ -280,25 +280,35 @@ async function listFiles() {
     request.pageToken = pageToken;
   }
 
-  const response = await gapi.client.drive.files.list(request);
-  if (pageToken) {
-    localStorage.setItem('page_token', pageToken);
-  } else {
-    localStorage.removeItem('page_token');
-  }
+  try {
+    const response = await gapi.client.drive.files.list(request);
+    if (pageToken) {
+      localStorage.setItem('page_token', pageToken);
+    } else {
+      localStorage.removeItem('page_token');
+    }
 
-  console.log(JSON.stringify(request, null, 2));
-  //console.log(JSON.stringify(response.result, null, 2));
+    console.log(JSON.stringify(request, null, 2));
+    //console.log(JSON.stringify(response.result, null, 2));
 
-  if (response.result.nextPageToken) {
-    pageToken = response.result.nextPageToken;
-  } else {
+    if (response.result.nextPageToken) {
+      pageToken = response.result.nextPageToken;
+    } else {
+      pageToken = null;
+    }
+
+    jsEvalContext.setVariable('files', response.result.files);
+    const output = document.getElementById('content');
+    jstProcess(jsEvalContext, output);
+
+  } catch (e) {
+    console.log(e);
     pageToken = null;
+    localStorage.removeItem('page_token');
+    jsEvalContext.setVariable('files', []);
+    const output = document.getElementById('content');
+    jstProcess(jsEvalContext, output);
   }
-
-  jsEvalContext.setVariable('files', response.result.files);
-  const output = document.getElementById('content');
-  jstProcess(jsEvalContext, output);
 }
 
 function clearFiles() {
