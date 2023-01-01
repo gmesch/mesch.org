@@ -1,6 +1,43 @@
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'].join(' ');
 
+class FlowCall {
+  constructor(name) {
+    this.name_ = name;
+    this.fn_ = null;
+    this.arg_ = null;
+    this.argApplied_ = null;
+  }
+
+  fn(fn) {
+    console.log(`${this.name_}: fn`)
+    this.fn_ = fn;
+    this.check_();
+  }
+
+  arg(arg) {
+    console.log(`${this.name_}: arg ${arg}`)
+    this.arg_ = arg;
+    this.check_();
+  }
+
+  check_() {
+    console.log(`${this.name_}: check_`)
+    if (!this.fn_ || !this.arg_) {
+      console.log(`${this.name_}: check_ NO`)
+      return;
+    }
+
+    if (this.argApplied_ != this.arg_) {
+      console.log(`${this.name_}: check_ YES`)
+      this.argApplied_ = this.arg_;
+      this.fn_(this.arg_);
+    } else {
+      console.log(`${this.name_}: check_ UNCHANGED`)
+    }
+  }
+}
+
 class Flow {
   constructor(document) {
     this.document_ = document;
@@ -10,71 +47,10 @@ class Flow {
     this.start_ = null;
     this.logout_ = null;
 
-    this.apiKey_ = null;
-    this.apiKeyApplied_ = null;
-    this.clientId_ = null;
-    this.clientIdApplied_ = null;
-
     this.buttonLogin_ = document.getElementById('login');
     this.buttonLogout_ = document.getElementById('logout');
 
     this.buttonStateHidden_();
-  }
-
-  readyApiKey(apiKey) {
-    console.log('readyApiKey');
-    this.apiKey_ = apiKey;
-    this.checkApiKey_();
-  }
-
-  atApiKey(fn) {
-    console.log('atApiKey');
-    this.apiKeyFn_ = fn;
-    this.checkApiKey_();
-  }
-
-  checkApiKey_() {
-    console.log('checkApiKey_');
-    if (!this.apiKey_ || !this.apiKeyFn_) {
-      console.log('checkApiKey_: No');
-      return;
-    }
-
-    if (this.apiKeyApplied_ != this.apiKey_) {
-      console.log('checkApiKey_: Apply');
-      this.apiKeyApplied_ = this.apiKey_;
-      this.apiKeyFn_(this.apiKey_);
-    } else {
-      console.log('checkApiKey_: Unchanged');
-    }
-  }
-
-  readyClientId(clientId) {
-    console.log('readyClientId');
-    this.clientId_ = clientId;
-    this.checkClientId_();
-  }
-
-  atClientId(fn) {
-    console.log('atClientId');
-    this.clientIdFn_ = fn;
-    this.checkClientId_();
-  }
-
-  checkClientId_() {
-    console.log('checkClientId_');
-    if (!this.clientId_ || !this.clientIdFn_) {
-      console.log('checkClientId_: No');
-      return;
-    }
-
-    if (this.clientIdApplied_ != this.clientId_) {
-      console.log('checkClientId_: Apply');
-      this.clientIdApplied_ = this.clientId_;
-      this.clientIdFn_(this.clientId_);
-    } else {
-      console.log('checkClientId_: Unchanged');
-    }
   }
 
   readyApi() {
@@ -217,9 +193,12 @@ class Flow {
 
 const flow = new Flow(document);
 
+const apiKeyCall = new FlowCall('apiKey');
+const clientIdCall = new FlowCall('clientId');
+
 function onLoadApi() {
   console.log('onLoadApi');
-  flow.atApiKey((apiKey) => {
+  apiKeyCall.fn((apiKey) => {
     console.log('onLoadApi: atApiKey');
     gapi.load('client', () => {
       console.log('onLoadApi: atApiKey() gapi.load()');
@@ -236,7 +215,7 @@ function onLoadApi() {
 
 function onLoadAuth() {
   console.log('onLoadAuth');
-  flow.atClientId((clientId) => {
+  clientIdCall.fn((clientId) => {
     console.log('onLoadAuth: atClientId()');
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
@@ -252,8 +231,8 @@ function init() {
   document.getElementById('apikey').value = localStorage.getItem('apikey');
   document.getElementById('client').value = localStorage.getItem('client');
 
-  flow.readyClientId(document.getElementById('client').value);
-  flow.readyApiKey(document.getElementById('apikey').value);
+  clientIdCall.arg(document.getElementById('client').value);
+  apiKeyCall.arg(document.getElementById('apikey').value);
 }
 
 function setup(event) {
@@ -262,8 +241,8 @@ function setup(event) {
   localStorage.setItem('client', document.getElementById('client').value);
   event.preventDefault();
 
-  flow.readyClientId(document.getElementById('client').value);
-  flow.readyApiKey(document.getElementById('apikey').value);
+  clientIdCall.arg(document.getElementById('client').value);
+  apiKeyCall.arg(document.getElementById('apikey').value);
 }
 
 function login() {
