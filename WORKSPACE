@@ -7,8 +7,8 @@ local_repository(
     path = "./vnd/jsaction",
 )
 
-# The version used by default by io_bazel_rules_closure is too old and missing
-# files that are actually used.
+# The version used by default by io_bazel_rules_closure (0.8.0) is too old and
+# missing files that are actually used.
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "bazel_skylib",
