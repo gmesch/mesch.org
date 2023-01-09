@@ -278,6 +278,13 @@ function onLoadAuth() {
 
 function init() {
   console.log('init');
+
+  const eventContract = new EventContract(document.body);
+  eventContract.enableEvent('click');
+  eventContract.registerAction('test', (actionFlow) => {
+    console.log(actionFlow);
+  });
+
   document.getElementById('apikey').value = localStorage.getItem('apikey');
   document.getElementById('client').value = localStorage.getItem('client');
 
